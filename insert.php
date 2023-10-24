@@ -3,27 +3,38 @@ header('Content-type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
-$conectar = mysqli_connect('mysql-prueba-shf.alwaysdata.net','332988','HelloMexico@123');
+
+// Establecer la conexión con la base de datos PostgreSQL
+$host = "dpg-ckrgqgg1hnes73f8e950-a"; // Cambia esto por la dirección del host de tu base de datos PostgreSQL
+$port = "5432"; // Cambia esto por el puerto de tu base de datos PostgreSQL (por defecto suele ser 5432)
+$dbname = "juegashf"; // Cambia esto por el nombre de tu base de datos PostgreSQL
+$user = "root"; // Cambia esto por tu nombre de usuario de PostgreSQL
+$password = "Nm574iI3KrUlCreO6l2QfjAFmn7GIjGV"; // Cambia esto por tu contraseña de PostgreSQL
+
+$conectar = pg_connect("host=$host port=$port dbname=$dbname user=$user password=$password");
+
 if(!$conectar){
-    echo "No hay conexion";
-}else{
-    $base=mysqli_select_db($conectar,'prueba-shf_juego');
-    if(!$base){
-        echo "no se encontro la base de datos";
+    echo "No hay conexión";
+} else {
+    $sql = 'SELECT * FROM usuarios ORDER BY score DESC LIMIT 10';
+    $result = pg_query($conectar, $sql);
+
+    if(!$result){
+        echo "Error en la consulta";
+    } else {
+        // Crear un array para almacenar los resultados
+        $usuarios = array();
+
+        // Iterar a través de los resultados y agregarlos al array
+        while($row = pg_fetch_assoc($result)){
+            $usuarios[] = number_format($row['score']);
+        }
+
+        // Convertir el array a formato JSON y enviarlo como respuesta
+        echo json_encode($usuarios);
     }
-}
-$json = file_get_contents('php://input');
 
-
-$match = array();
-$match1 = array();
-preg_match('/^[A-Za-z0-9]+[ ]/', $json, $match);
-preg_match('/[\s]+[0-9]+[0-9]/', $json, $match1);
-$email=trim($match1[0]);
-
-$sql = "INSERT INTO usuarios (usuario, score) VALUES ('" . $match[0] . "', " . $email . ")";
-$result= mysqli_query($conectar,$sql);
-if($result){
-    echo "Datos guardados correctamente";
+    // Cerrar la conexión
+    pg_close($conectar);
 }
 ?>
